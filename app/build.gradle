@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.arapplication"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -42,10 +42,14 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.camera:camera-view:1.0.0-alpha23'
+
     def camerax_version = "1.1.0-alpha08"
 
+    //ARCore
+    implementation 'com.google.ar:core:1.27.0'
+
     //Camera
+    implementation 'androidx.camera:camera-view:1.0.0-alpha23'
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"

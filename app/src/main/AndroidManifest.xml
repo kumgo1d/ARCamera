@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.arapplication">
+
     <uses-feature android:name="android.hardware.camera.any" />
+    <uses-feature android:name="android.hardware.camera.ar" />
+
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
@@ -20,6 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data android:name="com.google.ar.core" android:value="required" />
     </application>
 
 </manifest>
