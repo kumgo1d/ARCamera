@@ -13,9 +13,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.arapplication.databinding.ActivitySecondBinding
-import com.google.ar.core.ArCoreApk
-import com.google.ar.core.Config
-import com.google.ar.core.Session
+import com.google.ar.core.*
 import com.google.ar.core.exceptions.UnavailableException
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -50,20 +48,17 @@ class SecondActivity : AppCompatActivity() {
             createSession()
         }
 
-        // Request camera permissions
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
 
-        // Set up the listener for take photo button
         binding.cameraCaptureButton.setOnClickListener { takePhoto() }
         outputDirectory = getOutputDirectory()
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
-    // Verify that ARCore is installed and using the current version.
     private fun isARCoreSupportedAndUpToDate(): Boolean {
         return when (ArCoreApk.getInstance().checkAvailability(this)) {
             ArCoreApk.Availability.SUPPORTED_INSTALLED -> true
@@ -85,17 +80,30 @@ class SecondActivity : AppCompatActivity() {
     }
 
     private fun createSession() {
-        // Create a new ARCore session.
         session = Session(this)
 
-        // Create a session config.
         val config = Config(session)
 
         // Do feature-specific operations here, such as enabling depth or turning on
         // support for Augmented Faces.
+        setCameraConfig(session)
 
-        // Configure the session.
+        val isDepthSupported = session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
+        if(isDepthSupported) {
+            config.depthMode = Config.DepthMode.AUTOMATIC
+        }
+
         session.configure(config)
+    }
+
+    private fun setCameraConfig(session: Session) {
+        val filter = CameraConfigFilter(session)
+
+        filter.targetFps = EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30)
+        filter.depthSensorUsage = EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE)
+
+        val cameraConfigList = session.getSupportedCameraConfigs(filter)
+        session.cameraConfig = cameraConfigList[0]
     }
 
     override fun onRequestPermissionsResult(
@@ -125,17 +133,14 @@ class SecondActivity : AppCompatActivity() {
             // Used to bind the lifecycle of cameras to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Preview
             val preview = Preview.Builder()
                 .build()
                 .also {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
 
-            imageCapture = ImageCapture.Builder()
-                .build()
+            imageCapture = ImageCapture.Builder().build()
 
-            // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
@@ -143,8 +148,7 @@ class SecondActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // Bind use cases to camera
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
@@ -161,7 +165,7 @@ class SecondActivity : AppCompatActivity() {
         val photoFile = File(
             outputDirectory,
             SimpleDateFormat(FILENAME_FORMAT, Locale.US
-            ).format(System.currentTimeMillis()) + ".jpg")
+            ).format(System.currentTimeMillis()) + ".png")
 
         // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
