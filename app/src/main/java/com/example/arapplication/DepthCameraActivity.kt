@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,7 +13,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.arapplication.databinding.ActivitySecondBinding
+import com.example.arapplication.databinding.ActivityDepthCameraBinding
+import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.UnavailableException
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,9 +23,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
 
 @AndroidEntryPoint
-class SecondActivity : AppCompatActivity() {
+class DepthCameraActivity : AppCompatActivity(), GLSurfaceView.Renderer {
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
@@ -37,11 +41,13 @@ class SecondActivity : AppCompatActivity() {
     private lateinit var session: Session
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var binding: ActivitySecondBinding
+    private lateinit var binding: ActivityDepthCameraBinding
+
+    private val depthTexture = DepthTextureHandler()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySecondBinding.inflate(layoutInflater)
+        binding = ActivityDepthCameraBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         if(isARCoreSupportedAndUpToDate()) {
@@ -82,15 +88,17 @@ class SecondActivity : AppCompatActivity() {
     private fun createSession() {
         session = Session(this)
 
-        val config = Config(session)
-
-        // Do feature-specific operations here, such as enabling depth or turning on
-        // support for Augmented Faces.
+        val config = session.config
         setCameraConfig(session)
 
         val isDepthSupported = session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
         if(isDepthSupported) {
             config.depthMode = Config.DepthMode.AUTOMATIC
+        } else {
+            config.depthMode = Config.DepthMode.DISABLED
+            val snackbar = Snackbar.make(binding.root,
+                "[Depth not supported on this device]", Snackbar.LENGTH_SHORT)
+            snackbar.show()
         }
 
         session.configure(config)
@@ -129,7 +137,7 @@ class SecondActivity : AppCompatActivity() {
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
-        cameraProviderFuture.addListener(Runnable {
+        cameraProviderFuture.addListener( {
             // Used to bind the lifecycle of cameras to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
@@ -144,10 +152,7 @@ class SecondActivity : AppCompatActivity() {
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
-                // Unbind use cases before rebinding
                 cameraProvider.unbindAll()
-
-                // Bind use cases to camera
                 cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
 
             } catch(exc: Exception) {
@@ -158,19 +163,15 @@ class SecondActivity : AppCompatActivity() {
     }
 
     private fun takePhoto() {
-        // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        // Create time-stamped output file to hold the image
         val photoFile = File(
             outputDirectory,
             SimpleDateFormat(FILENAME_FORMAT, Locale.US
             ).format(System.currentTimeMillis()) + ".png")
 
-        // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        // Set up image capture listener, which is triggered after photo has been taken
         imageCapture.takePicture(
             outputOptions, ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
@@ -197,5 +198,17 @@ class SecondActivity : AppCompatActivity() {
         super.onDestroy()
         session.close()
         cameraExecutor.shutdown()
+    }
+
+    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        depthTexture.createOnGlThread()
+    }
+
+    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+
+    }
+
+    override fun onDrawFrame(gl: GL10?) {
+//        depthTexture.update(frame)
     }
 }
