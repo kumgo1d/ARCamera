@@ -6,7 +6,6 @@ import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
 
 
-/** Handle RG8 GPU texture containing a DEPTH16 depth image.  */
 class DepthTextureHandler {
     var depthTexture = -1
         private set
@@ -15,33 +14,17 @@ class DepthTextureHandler {
     var depthHeight = -1
         private set
 
-    /**
-     * Creates and initializes the depth texture. This method needs to be called on a
-     * thread with a EGL context attached.
-     */
     fun createOnGlThread() {
         val textureId = IntArray(1)
         GLES20.glGenTextures(1, textureId, 0)
         depthTexture = textureId[0]
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, depthTexture)
-        GLES20.glTexParameteri(
-            GLES20.GL_TEXTURE_2D,
-            GLES20.GL_TEXTURE_WRAP_S,
-            GLES20.GL_CLAMP_TO_EDGE
-        )
-        GLES20.glTexParameteri(
-            GLES20.GL_TEXTURE_2D,
-            GLES20.GL_TEXTURE_WRAP_T,
-            GLES20.GL_CLAMP_TO_EDGE
-        )
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
     }
 
-    /**
-     * Updates the depth texture with the content from acquireDepthImage().
-     * This method needs to be called on a thread with an EGL context attached.
-     */
     fun update(frame: Frame) {
         try {
             val depthImage = frame.acquireDepthImage()
