@@ -1,18 +1,19 @@
-package com.example.arapplication
+package com.example.arapplication.depth
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.opengl.GLSurfaceView
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.arapplication.R
 import com.example.arapplication.databinding.ActivityDepthCameraBinding
 import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.*
@@ -28,6 +29,7 @@ import javax.microedition.khronos.opengles.GL10
 
 @AndroidEntryPoint
 class DepthCameraActivity : AppCompatActivity(), GLSurfaceView.Renderer {
+
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
@@ -167,7 +169,8 @@ class DepthCameraActivity : AppCompatActivity(), GLSurfaceView.Renderer {
 
         val photoFile = File(
             outputDirectory,
-            SimpleDateFormat(FILENAME_FORMAT, Locale.US
+            SimpleDateFormat(
+                FILENAME_FORMAT, Locale.US
             ).format(System.currentTimeMillis()) + ".png")
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()

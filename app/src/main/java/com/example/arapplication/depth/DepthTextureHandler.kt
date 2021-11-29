@@ -1,4 +1,4 @@
-package com.example.arapplication
+package com.example.arapplication.depth
 
 import android.opengl.GLES20
 import android.opengl.GLES30
